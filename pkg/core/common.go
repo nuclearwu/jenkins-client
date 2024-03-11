@@ -109,11 +109,12 @@ func (j *JenkinsCore) AuthHandle(request *http.Request) (err error) {
 
 // CrumbHandle handle crum with http request
 func (j *JenkinsCore) CrumbHandle(request *http.Request) error {
-	if c, err := j.GetCrumb(); err == nil && c != nil {
+	if c, response, err := j.GetCrumb(); err == nil && c != nil {
 		// cannot get the crumb could be a normal situation
 		j.CrumbRequestField = c.CrumbRequestField
 		j.Crumb = c.Crumb
 		request.Header.Set(j.CrumbRequestField, j.Crumb)
+		request.Header.Set("Cookie", response.Header.Get("Set-Cookie"))
 	} else {
 		return err
 	}
@@ -122,13 +123,13 @@ func (j *JenkinsCore) CrumbHandle(request *http.Request) error {
 }
 
 // GetCrumb get the crumb from Jenkins
-func (j *JenkinsCore) GetCrumb() (crumbIssuer *JenkinsCrumb, err error) {
+func (j *JenkinsCore) GetCrumb() (crumbIssuer *JenkinsCrumb, response *http.Response, err error) {
 	var (
 		statusCode int
 		data       []byte
 	)
 
-	if statusCode, data, err = j.Request(http.MethodGet, "/crumbIssuer/api/json", nil, nil); err == nil {
+	if statusCode, data, response, err = j.Request(http.MethodGet, "/crumbIssuer/api/json", nil, nil); err == nil {
 		if statusCode == 200 {
 			err = json.Unmarshal(data, &crumbIssuer)
 		} else if statusCode == 404 {
@@ -149,7 +150,7 @@ func (j *JenkinsCore) RequestWithData(method, api string, headers map[string]str
 		data       []byte
 	)
 
-	if statusCode, data, err = j.Request(method, api, headers, payload); err == nil {
+	if statusCode, data, _, err = j.Request(method, api, headers, payload); err == nil {
 		if statusCode == successCode {
 			err = json.Unmarshal(data, obj)
 		} else {
@@ -166,7 +167,7 @@ func (j *JenkinsCore) RequestWithoutData(method, api string, headers map[string]
 		data []byte
 	)
 
-	if statusCode, data, err = j.Request(method, api, headers, payload); err == nil &&
+	if statusCode, data, _, err = j.Request(method, api, headers, payload); err == nil &&
 		statusCode != successCode {
 		err = j.ErrorHandle(statusCode, data)
 	}
@@ -275,7 +276,7 @@ func (r *RequestBuilder) GetObject(obj interface{}) error {
 
 // Do runs the HTTP request
 func (r *RequestBuilder) Do() (err error) {
-	if r.responseCode, r.data, err = r.client.Request(r.method, r.api, r.headers, r.payload); err == nil {
+	if r.responseCode, r.data, _, err = r.client.Request(r.method, r.api, r.headers, r.payload); err == nil {
 		found := false
 		for _, code := range r.acceptCodes {
 			if code == r.responseCode {
@@ -358,10 +359,9 @@ func (j *JenkinsCore) RequestWithResponse(method, api string, headers map[string
 
 // Request make a common request
 func (j *JenkinsCore) Request(method, api string, headers map[string]string, payload io.Reader) (
-	statusCode int, data []byte, err error) {
+	statusCode int, data []byte, response *http.Response, err error) {
 	var (
 		req        *http.Request
-		response   *http.Response
 		requestURL string
 	)
 

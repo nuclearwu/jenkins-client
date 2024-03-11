@@ -232,7 +232,7 @@ func (p *Manager) UninstallPlugin(name string) (err error) {
 		data       []byte
 	)
 
-	if statusCode, data, err = p.Request(http.MethodPost, api, nil, nil); err == nil {
+	if statusCode, data, _, err = p.Request(http.MethodPost, api, nil, nil); err == nil {
 		if statusCode != 200 {
 			err = fmt.Errorf("unexpected status code: %d", statusCode)
 			if p.Debug {

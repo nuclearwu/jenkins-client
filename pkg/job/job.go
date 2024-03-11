@@ -244,7 +244,7 @@ func (q *Client) GetJobTypeCategories() (jobCategories []Category, err error) {
 		data       []byte
 	)
 
-	if statusCode, data, err = q.Request("GET", "/view/all/itemCategories?depth=3", nil, nil); err == nil {
+	if statusCode, data, _, err = q.Request("GET", "/view/all/itemCategories?depth=3", nil, nil); err == nil {
 		if statusCode == 200 {
 			type innerJobCategories struct {
 				Categories []Category
@@ -400,7 +400,7 @@ func (q *Client) Delete(jobName string) (err error) {
 		httpdownloader.ContentType: httpdownloader.ApplicationForm,
 	}
 
-	if statusCode, _, err = q.Request(http.MethodPost, api, header, nil); err == nil {
+	if statusCode, _, _, err = q.Request(http.MethodPost, api, header, nil); err == nil {
 		if statusCode != 200 && statusCode != 302 {
 			err = fmt.Errorf("unexpected status code: %d", statusCode)
 		}

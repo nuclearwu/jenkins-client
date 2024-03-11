@@ -60,7 +60,7 @@ var _ = Describe("common test", func() {
 			roundTripper.EXPECT().
 				RoundTrip(NewRequestMatcher(request)).Return(response, nil)
 
-			statusCode, data, err := jenkinsCore.Request(method, api, headers, payload)
+			statusCode, data, _, err := jenkinsCore.Request(method, api, headers, payload)
 			Expect(err).To(BeNil())
 			Expect(statusCode).To(Equal(200))
 			Expect(string(data)).To(Equal(""))
@@ -94,7 +94,7 @@ var _ = Describe("common test", func() {
 
 			headers = make(map[string]string, 1)
 			headers["fake"] = "fake"
-			statusCode, data, err := jenkinsCore.Request(method, api, headers, payload)
+			statusCode, data, _, err := jenkinsCore.Request(method, api, headers, payload)
 			Expect(err).To(BeNil())
 			Expect(statusCode).To(Equal(200))
 			Expect(string(data)).To(Equal(""))
@@ -113,14 +113,14 @@ var _ = Describe("common test", func() {
 			roundTripper.EXPECT().
 				RoundTrip(NewRequestMatcher(requestCrumb)).Return(responseCrumb, nil)
 
-			_, err := jenkinsCore.GetCrumb()
+			_, _, err := jenkinsCore.GetCrumb()
 			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("with crumb setting", func() {
 			PrepareForGetIssuer(roundTripper, jenkinsCore.URL, "", "")
 
-			crumb, err := jenkinsCore.GetCrumb()
+			crumb, _, err := jenkinsCore.GetCrumb()
 			Expect(err).To(BeNil())
 			Expect(crumb).NotTo(BeNil())
 			Expect(crumb.CrumbRequestField).To(Equal("CrumbRequestField"))
@@ -139,7 +139,7 @@ var _ = Describe("common test", func() {
 			//	RoundTrip(NewRequestMatcher(requestCrumb)).Return(responseCrumb, nil)
 			PrepareForGetIssuerWith500(roundTripper, jenkinsCore.URL, "", "")
 
-			_, err := jenkinsCore.GetCrumb()
+			_, _, err := jenkinsCore.GetCrumb()
 			Expect(err).To(HaveOccurred())
 		})
 
@@ -165,7 +165,7 @@ var _ = Describe("common test", func() {
 				RoundTrip(NewRequestMatcher(request)).Return(response, nil)
 
 			SetLanguage("zh-CN")
-			statusCode, data, err := jenkinsCore.Request(http.MethodGet, "/view/all/itemCategories?depth=3", nil, nil)
+			statusCode, data, _, err := jenkinsCore.Request(http.MethodGet, "/view/all/itemCategories?depth=3", nil, nil)
 			SetLanguage("")
 			Expect(err).To(BeNil())
 			Expect(statusCode).To(Equal(200))
